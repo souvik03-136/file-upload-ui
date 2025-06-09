@@ -18,7 +18,7 @@ export interface PaginationProps {
 export interface FileTableProps {
   files: FileItem[];
   onView: (file: FileItem) => void;
-  onInfo: (file: FileItem) => void;
+  onDelete: (fileId: string) => void;  // Changed from onInfo to onDelete with file ID
 }
 
 export interface FileUploadProps {

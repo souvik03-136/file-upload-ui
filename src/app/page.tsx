@@ -66,12 +66,11 @@ export default function Home() {
 
   const handleView = (file: FileItem) => {
     console.log('View file:', file.name);
-    // Implement view functionality
+    // Implement view functionality here
   };
 
-  const handleInfo = (file: FileItem) => {
-    console.log('Show info for file:', file.name);
-    // Implement info functionality
+  const handleDelete = (fileId: string) => {
+    setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
   };
 
   return (
@@ -111,7 +110,7 @@ export default function Home() {
           <FileTable 
             files={currentFiles}
             onView={handleView}
-            onInfo={handleInfo}
+            onDelete={handleDelete}  // Pass delete handler to FileTable
           />
           
           {files.length > 0 && (
