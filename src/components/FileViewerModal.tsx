@@ -1,42 +1,100 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FileViewerModalProps } from '@/types/index';
 import { getFileTypeColor, formatFileSize, formatDate } from '@/utils/fileUtils';
 
 export default function FileViewerModal({ file, isOpen, onClose }: FileViewerModalProps) {
   const [content, setContent] = useState<string>('');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const pdfUrlRef = useRef<string | null>(null); // To track current PDF URL for cleanup
+
+  // Cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen && file) {
       loadFileContent(file);
+    } else {
+      // Cleanup when modal closes
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
+        pdfUrlRef.current = null;
+      }
     }
   }, [isOpen, file]);
 
   const loadFileContent = async (fileItem: any) => {
     setLoading(true);
     setError('');
+    setContent('');
+    setPdfUrl(null);
+
+    // Cleanup previous PDF URL if exists
+    if (pdfUrlRef.current) {
+      URL.revokeObjectURL(pdfUrlRef.current);
+      pdfUrlRef.current = null;
+    }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
 
       switch (fileItem.type) {
         case 'PDF':
-          setContent(`This is a PDF file: ${fileItem.name}\n\nContent Preview:\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit...`);
+          if (fileItem.fileData) {
+            const url = URL.createObjectURL(fileItem.fileData);
+            pdfUrlRef.current = url;
+            setPdfUrl(url);
+          } else {
+            setContent(`PDF file: ${fileItem.name}\n\nFile data not available`);
+          }
           break;
+
         case 'TXT':
-          setContent(`Text File Content:\n\n# ${fileItem.name}\n\nThis is a sample text file with multiple lines of content...\nLine 1: Sample content for demonstration\nLine 2: More content...`);
+          if (fileItem.fileData) {
+            const text = await fileItem.fileData.text();
+            setContent(text);
+          } else {
+            setContent(`Text File: ${fileItem.name}\n\nFile data not available`);
+          }
           break;
+
         case 'DOC':
-        case 'DOCX':
-          setContent(`Document: ${fileItem.name}\n\n## Executive Summary\n\nThis document contains important information...`);
+          setContent(`Document: ${fileItem.name}\n\nDOC content extraction requires additional libraries`);
           break;
+
+        case 'DOCX':
+            if (fileItem.fileData) {
+              try {
+                const mammoth = await import('mammoth');
+                const arrayBuffer = await fileItem.fileData.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                setContent(result.value);
+              } catch (err) {
+                console.error(err);
+                setError('Failed to extract DOCX content');
+              }
+            } else {
+              setContent(`Document: ${fileItem.name}\n\nFile data not available`);
+            }
+            break;
+
+
         default:
-          setContent(`File Type: ${fileItem.type}\nFile Name: ${fileItem.name}\nFile Size: ${(fileItem.size / 1024 / 1024).toFixed(2)} MB\n\nThis file type is not previewable.`);
+          setContent(
+            `File Type: ${fileItem.type}\nFile Name: ${fileItem.name}\n\nPreview not available`
+          );
       }
     } catch (err) {
+      console.error(err);
       setError('Failed to load file content');
     } finally {
       setLoading(false);
@@ -50,7 +108,13 @@ export default function FileViewerModal({ file, isOpen, onClose }: FileViewerMod
   };
 
   const handleClose = () => {
+    if (pdfUrlRef.current) {
+      URL.revokeObjectURL(pdfUrlRef.current);
+      pdfUrlRef.current = null;
+    }
+
     setContent('');
+    setPdfUrl(null);
     setError('');
     onClose();
   };
@@ -58,17 +122,18 @@ export default function FileViewerModal({ file, isOpen, onClose }: FileViewerMod
   if (!isOpen || !file) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={handleBackdropClick}>
-
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
       {/* Modal content */}
       <div className="relative w-full max-w-4xl h-[90vh] bg-gradient-to-br from-slate-900 via-purple-900/50 to-slate-900 rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
-
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
           <div className="flex items-center space-x-4">
-            {/* Fixed class interpolation */}
-            <div className={`w-12 h-12 ${getFileTypeColor(file.type)} rounded-xl flex items-center justify-center text-white font-bold`}>
+            <div
+              className={`w-12 h-12 ${getFileTypeColor(file.type)} rounded-xl flex items-center justify-center text-white font-bold`}
+            >
               {file.type.substring(0, 3)}
             </div>
             <div>
@@ -108,6 +173,15 @@ export default function FileViewerModal({ file, isOpen, onClose }: FileViewerMod
                 <p className="text-lg font-semibold mb-2">Error Loading File</p>
                 <p className="text-gray-400">{error}</p>
               </div>
+            </div>
+          ) : pdfUrl ? (
+            <div className="h-full w-full">
+              <iframe
+                src={pdfUrl}
+                className="w-full h-full"
+                frameBorder="0"
+                title={`PDF Viewer: ${file.name}`}
+              />
             </div>
           ) : (
             <div className="h-full overflow-y-auto p-6 custom-scrollbar">

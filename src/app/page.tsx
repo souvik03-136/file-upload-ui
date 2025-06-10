@@ -52,20 +52,23 @@ export default function ModernUploadPage() {
   };
 
   const handleFileUpload = (uploadedFiles: File[]) => {
-      const newFiles: FileItem[] = uploadedFiles.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: file.name,
-      type: getFileType(file.name), // Use shared utility
-      size: file.size,
-      uploadDate: new Date()
-    }));
-    setFiles(prev => [...prev, ...newFiles]);
-  };
+  const newFiles: FileItem[] = uploadedFiles.map((file, index) => ({
+    id: `${Date.now()}-${index}`,
+    name: file.name,
+    type: getFileType(file.name),
+    size: file.size,
+    uploadDate: new Date(),
+    fileData: file // Store actual file data
+  }));
+  setFiles(prev => [...prev, ...newFiles]);
+};
+
+const handleFolderUpload = (uploadedFiles: FileList) => {
+  const filesArray = Array.from(uploadedFiles);
+  handleFileUpload(filesArray);
+};
   
-  const handleFolderUpload = (uploadedFiles: FileList) => {
-    const filesArray = Array.from(uploadedFiles);
-    handleFileUpload(filesArray);
-  };
+
 
   const handleFileView = (file: FileItem) => {
     setSelectedFile(file);
@@ -183,10 +186,10 @@ export default function ModernUploadPage() {
 
       {/* File Viewer Modal */}
       <FileViewerModal
-        file={selectedFile}
-        isOpen={isViewerOpen}
-        onClose={handleCloseViewer}
-      />
+    file={selectedFile} // Now includes fileData
+    isOpen={isViewerOpen}
+    onClose={handleCloseViewer}
+/>
     </div>
   );
 }

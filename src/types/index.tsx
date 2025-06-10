@@ -6,6 +6,7 @@ export interface FileItem {
   type: 'PDF' | 'DOC' | 'TXT' | 'DOCX' | 'XLS' | 'XLSX' | 'PPT' | 'PPTX' | 'CSV' |'OTHER';
   size: number;
   uploadDate: Date;
+  fileData?: Blob; // Add this property
 }
 
 export interface PaginationProps {
