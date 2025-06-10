@@ -9,10 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.263.1",
+    "mammoth": "^1.9.1",
     "next": "^15.3.3",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-pdf": "^9.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",

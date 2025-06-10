@@ -1,7 +1,9 @@
+'use client';
+
 export interface FileItem {
   id: string;
   name: string;
-  type: 'PDF' | 'DOC' | 'TXT' | 'DOCX' | 'XLS' | 'XLSX' | 'PPT' | 'PPTX' | 'OTHER';
+  type: 'PDF' | 'DOC' | 'TXT' | 'DOCX' | 'XLS' | 'XLSX' | 'PPT' | 'PPTX' | 'CSV' |'OTHER';
   size: number;
   uploadDate: Date;
 }
@@ -18,10 +20,16 @@ export interface PaginationProps {
 export interface FileTableProps {
   files: FileItem[];
   onView: (file: FileItem) => void;
-  onDelete: (fileId: string) => void;  // Changed from onInfo to onDelete with file ID
+  onDelete: (fileId: string) => void; 
 }
 
 export interface FileUploadProps {
   onFileUpload: (files: File[]) => void;
   onFolderUpload: (files: FileList) => void;
+}
+
+export interface FileViewerModalProps {
+  file: FileItem | null;
+  isOpen: boolean;
+  onClose: () => void;
 }

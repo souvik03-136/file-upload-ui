@@ -5,6 +5,7 @@ import { FileItem } from '@/types/index';
 import FileUpload from '@/components/FileUpload';
 import FileTable from '@/components/FileTable';
 import Pagination from '@/components/Pagination';
+import FileViewerModal from '@/components/FileViewerModal';
 
 export default function ModernUploadPage() {
   const [files, setFiles] = useState<FileItem[]>([
@@ -26,6 +27,8 @@ export default function ModernUploadPage() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const totalPages = Math.ceil(files.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -36,6 +39,7 @@ export default function ModernUploadPage() {
     
     switch (extension) {
       case 'pdf': return 'PDF';
+      case 'csv': return 'CSV';
       case 'doc': return 'DOC';
       case 'docx': return 'DOCX';
       case 'txt': return 'TXT';
@@ -48,26 +52,29 @@ export default function ModernUploadPage() {
   };
 
   const handleFileUpload = (uploadedFiles: File[]) => {
-    const newFiles: FileItem[] = uploadedFiles.map((file, index) => ({
+      const newFiles: FileItem[] = uploadedFiles.map((file, index) => ({
       id: `${Date.now()}-${index}`,
       name: file.name,
-      type: getFileType(file.name),
+      type: getFileType(file.name), // Use shared utility
       size: file.size,
       uploadDate: new Date()
     }));
-    
     setFiles(prev => [...prev, ...newFiles]);
   };
-
+  
   const handleFolderUpload = (uploadedFiles: FileList) => {
     const filesArray = Array.from(uploadedFiles);
     handleFileUpload(filesArray);
   };
 
   const handleFileView = (file: FileItem) => {
-    // Implement file view logic here
-    console.log('Viewing file:', file);
-    // You can add modal opening logic, navigation, or external viewer here
+    setSelectedFile(file);
+    setIsViewerOpen(true);
+  };
+
+  const handleCloseViewer = () => {
+    setIsViewerOpen(false);
+    setSelectedFile(null);
   };
 
   const handleFileDelete = (fileId: string) => {
@@ -116,7 +123,7 @@ export default function ModernUploadPage() {
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-ping"></div>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-white to-orange-300 bg-clip-text text-transparent">teX.ai</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-white to-orange-300 bg-clip-text text-transparent">iSearch</span>
             </div>
             <div className="flex items-center space-x-6">
               <button className="text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 px-4 py-2 rounded-lg hover:bg-white/10">
@@ -173,6 +180,13 @@ export default function ModernUploadPage() {
           </div>
         )}
       </main>
+
+      {/* File Viewer Modal */}
+      <FileViewerModal
+        file={selectedFile}
+        isOpen={isViewerOpen}
+        onClose={handleCloseViewer}
+      />
     </div>
   );
 }
